@@ -34,6 +34,24 @@ class ExecutionMode(StrEnum):
     TEST = "test"
 
 
+class CallerContext(StrEnum):
+    """Generic caller contexts for shared Product Cyber integrations."""
+
+    ENGINEERING_CI = "engineering-ci"
+    RELEASE_PIPELINE = "release-pipeline"
+    FACTORY = "factory"
+    OPERATOR = "operator"
+
+
+class ArtifactType(StrEnum):
+    """Generic product artifact categories used by the portfolio demo."""
+
+    FIRMWARE = "firmware"
+    SOFTWARE_BINARY = "software-binary"
+    INSTALLER = "installer"
+    RELEASE_ARTIFACT = "release-artifact"
+
+
 class Decision(StrEnum):
     """Deterministic security decision."""
 
@@ -62,8 +80,6 @@ class ArtifactIdentity(BaseModel):
     @field_validator("name")
     @classmethod
     def validate_name(cls, value: str) -> str:
-        # Keep identity portable and prevent callers from smuggling a path into
-        # a human-readable artifact name.
         if Path(value).name != value:
             raise ValueError("artifact name must be a basename, not a path")
         return value
@@ -75,6 +91,34 @@ class ArtifactIdentity(BaseModel):
         if any(character not in "0123456789abcdef" for character in normalized):
             raise ValueError("sha256 must contain only hexadecimal characters")
         return normalized
+
+
+class ProductArtifact(BaseModel):
+    """Immutable product context composed around an exact artifact identity.
+
+    Product and caller metadata are intentionally generic. They are security-relevant
+    inputs to later policy/authorization logic, but they do not grant authority by
+    themselves.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    identity: ArtifactIdentity
+    artifact_type: ArtifactType
+    product_family: str = Field(min_length=1, max_length=80)
+    caller_context: CallerContext
+
+    @field_validator("product_family")
+    @classmethod
+    def validate_product_family(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized != value:
+            raise ValueError("product_family must already be normalized lowercase")
+        if any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-_" for character in value):
+            raise ValueError(
+                "product_family may contain only lowercase letters, numbers, hyphens, and underscores"
+            )
+        return value
 
 
 class PlannedAction(BaseModel):
