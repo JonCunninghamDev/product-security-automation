@@ -241,6 +241,18 @@ Responsibilities:
 
 This is explicitly a learning/demo CA, not a production CA implementation.
 
+The bounded development implementation uses one ephemeral self-signed root and
+directly issued leaf certificates. Trust is an explicit allowlist of exact root
+certificate fingerprints. Its invalidation strategy is to remove a root from that
+allowlist and regenerate the ephemeral CA and leaves. Certificate revocation lists,
+OCSP, intermediate CAs, and persistent CA key custody are intentionally outside this
+increment; they must be added through a later decision before production use is
+represented.
+
+Private keys are generated in process memory. Persistence is opt-in, encrypted, and
+written only with owner-only permissions. Generated key paths and common private-key
+suffixes are excluded from Git.
+
 ### `signing`
 
 Responsibilities:

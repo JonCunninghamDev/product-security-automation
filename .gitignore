@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Development PKI material is generated at runtime and must not enter Git.
+.pki/
+*.key
+*.key.pem
