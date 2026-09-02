@@ -27,23 +27,48 @@ Executable evidence:
 - `tests/test_models.py::test_artifact_identity_rejects_non_hex_digest`
 - `tests/test_models.py::test_artifact_identity_rejects_path_as_name`
 
+## Decision and execution-boundary models
+
+Status: Implemented as architecture foundation; execution adapters are not yet implemented
+
+Specification / platform context:
+- `ai/execution-modes.md`
+- proposed Engineering Platform Execution Modes Standard at `JonCunninghamDev/engineering-platform` commit `e95e7e0f65bff7ba20aeca4b88182700c0cc2222`
+
+Implementation:
+- `ExecutionMode` defines explicit `active`, `observe`, `demo`, and `test` runtime modes.
+- `DecisionResult` represents immutable deterministic PASS/FAIL output before execution.
+- `PlannedAction` represents inspectable intent separately from side-effect execution.
+- `SIGN_ARTIFACT` actions must be bound to an exact immutable `ArtifactIdentity`.
+- failed decisions cannot plan privileged signing actions.
+- failed decisions may still plan non-privileged evidence/audit actions.
+
+Executable evidence:
+- `tests/test_models.py::test_execution_modes_are_explicit_and_stable`
+- `tests/test_models.py::test_sign_action_must_bind_exact_artifact_identity`
+- `tests/test_models.py::test_decision_result_can_plan_signing_after_pass`
+- `tests/test_models.py::test_failed_decision_cannot_plan_signing`
+- `tests/test_models.py::test_failed_decision_can_still_plan_audit_evidence`
+- `tests/test_models.py::test_decision_result_is_immutable`
+
 Local verification command:
 
 ```bash
 pytest
 ```
 
-Expected evidence for this increment: 7 passing tests.
+Current local verification evidence: 13 passing tests.
 
 ## Not yet implemented
 
 The following remain specified but should not yet be represented as implemented evidence:
 
+- active/observe/demo/test execution adapters;
 - development PKI lifecycle and trust validation;
 - deterministic release policy engine;
 - signing authorization and Cosign integration;
 - independent signature verification;
-- audit/provenance records;
+- audit/provenance persistence;
 - Syft/Trivy evidence adapters;
 - CI security gates;
 - AI advisory layer and deterministic fallback.
