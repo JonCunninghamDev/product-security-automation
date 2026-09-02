@@ -4,16 +4,28 @@ from pydantic import ValidationError
 from product_security_automation.models import (
     ActionKind,
     ArtifactIdentity,
+    ArtifactType,
+    CallerContext,
     Decision,
     DecisionResult,
     ExecutionMode,
     PlannedAction,
+    ProductArtifact,
     ReasonCode,
 )
 
 
 def _artifact() -> ArtifactIdentity:
     return ArtifactIdentity(name="release.bin", size_bytes=3, sha256="a" * 64)
+
+
+def _product_artifact() -> ProductArtifact:
+    return ProductArtifact(
+        identity=_artifact(),
+        artifact_type=ArtifactType.FIRMWARE,
+        product_family="demo-controller",
+        caller_context=CallerContext.ENGINEERING_CI,
+    )
 
 
 def test_artifact_identity_is_immutable() -> None:
@@ -40,6 +52,71 @@ def test_execution_modes_are_explicit_and_stable() -> None:
         "demo",
         "test",
     }
+
+
+def test_caller_contexts_are_generic_and_explicit() -> None:
+    assert {caller.value for caller in CallerContext} == {
+        "engineering-ci",
+        "release-pipeline",
+        "factory",
+        "operator",
+    }
+
+
+def test_artifact_types_are_generic_and_explicit() -> None:
+    assert {artifact_type.value for artifact_type in ArtifactType} == {
+        "firmware",
+        "software-binary",
+        "installer",
+        "release-artifact",
+    }
+
+
+def test_product_artifact_composes_exact_identity_with_context() -> None:
+    product_artifact = _product_artifact()
+
+    assert product_artifact.identity == _artifact()
+    assert product_artifact.artifact_type is ArtifactType.FIRMWARE
+    assert product_artifact.product_family == "demo-controller"
+    assert product_artifact.caller_context is CallerContext.ENGINEERING_CI
+
+
+def test_product_artifact_is_immutable() -> None:
+    product_artifact = _product_artifact()
+
+    with pytest.raises(ValidationError):
+        product_artifact.caller_context = CallerContext.OPERATOR
+
+
+def test_product_family_must_be_normalized_safe_identifier() -> None:
+    with pytest.raises(ValidationError):
+        ProductArtifact(
+            identity=_artifact(),
+            artifact_type=ArtifactType.FIRMWARE,
+            product_family="Demo Controller",
+            caller_context=CallerContext.ENGINEERING_CI,
+        )
+
+    with pytest.raises(ValidationError):
+        ProductArtifact(
+            identity=_artifact(),
+            artifact_type=ArtifactType.FIRMWARE,
+            product_family="../demo-controller",
+            caller_context=CallerContext.ENGINEERING_CI,
+        )
+
+
+def test_caller_context_does_not_modify_artifact_identity() -> None:
+    engineering = _product_artifact()
+    factory = ProductArtifact(
+        identity=engineering.identity,
+        artifact_type=engineering.artifact_type,
+        product_family=engineering.product_family,
+        caller_context=CallerContext.FACTORY,
+    )
+
+    assert engineering.identity == factory.identity
+    assert engineering.caller_context is not factory.caller_context
 
 
 def test_sign_action_must_bind_exact_artifact_identity() -> None:
