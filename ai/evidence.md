@@ -7,12 +7,7 @@ This file maps implemented security claims to executable or inspectable evidence
 Status: Implemented in first increment
 
 Specification:
-- `ai/spec.md` §7.1 Artifact identity and integrity
-
-Architecture:
-- `ai/architecture.md` §3 TB-1 Untrusted artifact boundary
-- `ai/architecture.md` §4 Tamper path
-- `ai/architecture.md` §5 `artifact` component
+- `ai/spec.md` §8.1 Artifact identity and product context
 
 Implementation:
 - `src/product_security_automation/models.py` — immutable `ArtifactIdentity`, SHA-256 validation, stable reason codes
@@ -26,6 +21,30 @@ Executable evidence:
 - `tests/test_models.py::test_artifact_identity_is_immutable`
 - `tests/test_models.py::test_artifact_identity_rejects_non_hex_digest`
 - `tests/test_models.py::test_artifact_identity_rejects_path_as_name`
+
+## Product and caller context
+
+Status: Implemented as typed domain foundation; authorization rules are not yet implemented
+
+Specification / architecture:
+- `ai/spec.md` §6 Product Cyber service model
+- `ai/spec.md` §7 Core user stories
+- `ai/architecture.md` §3 Domain context
+
+Implementation:
+- `CallerContext` explicitly models `engineering-ci`, `release-pipeline`, `factory`, and `operator` as generic portfolio caller contexts.
+- `ArtifactType` explicitly models firmware, software binary, installer, and generic release artifact categories.
+- `ProductArtifact` composes immutable artifact identity with artifact type, normalized fictional product-family identifier, and caller context.
+- changing caller context does not change or replace the exact underlying artifact identity.
+- caller/product context is modeled as security-relevant input only; no current code grants signing authority based on caller type.
+
+Executable evidence:
+- `tests/test_models.py::test_caller_contexts_are_generic_and_explicit`
+- `tests/test_models.py::test_artifact_types_are_generic_and_explicit`
+- `tests/test_models.py::test_product_artifact_composes_exact_identity_with_context`
+- `tests/test_models.py::test_product_artifact_is_immutable`
+- `tests/test_models.py::test_product_family_must_be_normalized_safe_identifier`
+- `tests/test_models.py::test_caller_context_does_not_modify_artifact_identity`
 
 ## Decision and execution-boundary models
 
@@ -57,12 +76,13 @@ Local verification command:
 pytest
 ```
 
-Current local verification evidence: 13 passing tests.
+Last full local verification before the Product Cyber context-model increment: 13 passing tests. Six additional context-model tests are now present and should be included in the next full local/CI verification before merge.
 
 ## Not yet implemented
 
 The following remain specified but should not yet be represented as implemented evidence:
 
+- caller/action authorization policy;
 - active/observe/demo/test execution adapters;
 - development PKI lifecycle and trust validation;
 - deterministic release policy engine;
