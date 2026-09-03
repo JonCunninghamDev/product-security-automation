@@ -76,7 +76,39 @@ Local verification command:
 pytest
 ```
 
-Last full local verification before the Product Cyber context-model increment: 13 passing tests. Six additional context-model tests are now present and should be included in the next full local/CI verification before merge.
+Integrated verification after the Product Cyber context and development PKI increments:
+27 passing tests.
+
+## Bounded development PKI
+
+Status: Implemented for the local development/demo trust model
+
+Specification / architecture:
+- `ai/spec.md` §7.2 PKI fundamentals
+- `ai/architecture.md` §6 `pki` and §7 PKI scope
+- `ai/decisions.md` D-005 and D-008
+
+Implementation:
+- `src/product_security_automation/pki/development.py` creates an ephemeral P-256
+  development CA and directly issued signer/service certificates.
+- certificate inspection produces a secret-free metadata projection.
+- validation checks certificate time bounds, direct issuer relationship, CA
+  constraints, exact trusted-root fingerprint, root self-signature, and leaf
+  signature.
+- private-key export is explicit, encrypted, owner-only, and refuses symbolic-link
+  targets where the platform provides `O_NOFOLLOW`.
+- invalidation removes the ephemeral root from the configured trust set; rotation
+  replaces the root and its leaves.
+
+Executable evidence:
+- `tests/pki/test_development.py::test_ephemeral_ca_issues_signer_and_service_certificates_with_metadata`
+- `tests/pki/test_development.py::test_certificate_from_trusted_development_ca_validates`
+- `tests/pki/test_development.py::test_expired_certificate_is_rejected_with_stable_reason`
+- `tests/pki/test_development.py::test_certificate_from_untrusted_ca_is_rejected`
+- `tests/pki/test_development.py::test_private_key_export_requires_encryption_and_owner_only_permissions`
+- `tests/pki/test_development.py::test_private_key_export_does_not_follow_symbolic_links`
+- `tests/pki/test_development.py::test_inspection_projection_is_json_serializable_and_secret_free`
+- `tests/pki/test_development.py::test_leaf_validity_cannot_outlive_ca`
 
 ## Not yet implemented
 
@@ -84,7 +116,6 @@ The following remain specified but should not yet be represented as implemented 
 
 - caller/action authorization policy;
 - active/observe/demo/test execution adapters;
-- development PKI lifecycle and trust validation;
 - deterministic release policy engine;
 - signing authorization and Cosign integration;
 - independent signature verification;

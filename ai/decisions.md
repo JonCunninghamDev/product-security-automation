@@ -15,7 +15,7 @@ Each decision should include:
 
 ## D-001 — AI remains outside the security authorization path
 
-Date: 2026-09-03  
+Date: 2026-09-03
 Status: Accepted
 
 ### Decision
@@ -207,3 +207,45 @@ References:
 
 - https://github.com/anchore/syft
 - https://trivy.dev/docs/dev/target/sbom/
+
+---
+
+## D-008 — Bound the development PKI to ephemeral direct-chain trust
+
+Date: 2026-09-03
+Status: Accepted for v1
+
+### Decision
+
+The development PKI uses one ephemeral, self-signed root CA and leaf certificates
+issued directly by that root. Trust anchors are configured explicitly and matched by
+certificate fingerprint. Removing the root from the trust set invalidates all leaves;
+rotation creates a new ephemeral root and new leaves.
+
+Private keys remain in process memory by default. An explicit local export must be
+encrypted and owner-readable only. CRLs, OCSP, intermediate CAs, and persistent CA
+key custody are outside this bounded increment.
+
+### Rationale
+
+This scope visibly demonstrates creation, issuance, inspection, signature validation,
+trust, expiry, and key-handling boundaries without implying that a small portfolio
+service is a production CA. Whole-root invalidation is deterministic and sufficient
+for short-lived development identities.
+
+### Alternatives considered
+
+- CRL or OCSP support: deferred until persistent identity and revocation services are
+  justified by a later product requirement.
+- persistent unencrypted development keys: rejected because it creates avoidable
+  secret-handling risk and weakens the demo boundary.
+- intermediate CA hierarchy: deferred because the initial lifecycle requires only a
+  direct chain.
+
+### Evidence required
+
+- runtime-generated CA and leaf certificates;
+- signer and service certificate metadata tests;
+- trusted-chain success and expired/untrusted rejection tests;
+- encrypted key-export and filesystem-permission tests;
+- repository secret/key scan before review.
