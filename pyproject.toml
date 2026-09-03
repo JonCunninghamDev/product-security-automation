@@ -5,10 +5,11 @@ build-backend = "hatchling.build"
 [project]
 name = "product-security-automation"
 version = "0.1.0"
-description = "Evidence-driven product security automation demonstrations"
+description = "Evidence-driven product security automation demo"
 requires-python = ">=3.11"
 dependencies = [
   "cryptography>=44,<47",
+  "pydantic>=2.8,<3",
 ]
 
 [project.optional-dependencies]
@@ -18,6 +19,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 addopts = "-ra"
 testpaths = ["tests"]
 

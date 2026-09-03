@@ -1,10 +1,13 @@
+.runtime/
 .venv/
 __pycache__/
-.pytest_cache/
 *.py[cod]
-*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
 dist/
 build/
+*.egg-info/
 
 # Development PKI material is generated at runtime and must not enter Git.
 .pki/
